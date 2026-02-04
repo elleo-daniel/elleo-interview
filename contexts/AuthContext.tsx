@@ -101,13 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAccessAndRole();
   }, [user]);
 
-  useEffect(() => {
-    // Clean up URL hash after successful OAuth redirect
-    if (user && window.location.hash) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [user]);
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
