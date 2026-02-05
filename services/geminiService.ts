@@ -59,7 +59,7 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[],
 
     [Important Formatting Rules - MUST FOLLOW]
     1. Provide the structured summary in Korean (Markdown format).
-    2. Start the analysis report with this EXACT sentence: **'${record.basicInfo.name}'님의 인터뷰 분석 결과**
+    2. Start the analysis report with this EXACT sentence (ensure single quotes are around the name): **'${record.basicInfo.name}'님의 인터뷰 분석 결과**
     3. **SECTION FORMATTING (CRITICAL):**
        - **Sections 1, 2, 3, and 5** (핵심 강점, 우려 사항, 조직 적합성, 종합 의견) MUST be written as a **single natural paragraph (prose)**. Do NOT use bullet points or numbered lists in these sections.
        - **Section 4** (온보딩 & 코칭 가이드) MUST use **standard bullet points (- )** for actionable tips.
