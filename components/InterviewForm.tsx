@@ -96,10 +96,9 @@ const formatAISummary = (text: string) => {
         if (index === introIndex && introIndex >= 0 && introIndex < 10) {
           let displayTitle = line.replace(/[\*\#]/g, '').trim();
 
-          // Better Idea: UI automatically handles quotes around the name
-          // If the title is "홍길동님의...", make it "'홍길동'님의..."
-          if (!displayTitle.includes("'") && !displayTitle.includes('"')) {
-            displayTitle = displayTitle.replace(/^(.*)님의/, "'$1'님의");
+          // UI handles quotes if needed, but removing for now as requested for stability
+          if (displayTitle.includes("'") || displayTitle.includes('"')) {
+            displayTitle = displayTitle.replace(/['"]/g, "");
           }
 
           return (
