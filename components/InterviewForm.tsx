@@ -191,11 +191,11 @@ const formatAISummary = (text: string) => {
 
           return (
             <React.Fragment key={index}>
-              <h3 className="text-[17px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-2.5 group">
-                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-[8px] flex-shrink-0 font-montserrat font-black text-[13px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
+              <h3 className="text-[16px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-2.5 group">
+                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-[8px] flex-shrink-0 font-montserrat font-black text-[12px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
                   {num}
                 </span>
-                <span className="border-b border-transparent group-hover:border-elleo-purple/10 transition-all">
+                <span className="border-b border-transparent group-hover:border-elleo-purple/10 transition-all font-bold">
                   {parseBold(title)}
                 </span>
               </h3>
@@ -227,7 +227,7 @@ const formatAISummary = (text: string) => {
           const isLikelyHeaderTitle = !line.includes('.') && line.includes('**') && line.length < 40;
 
           return (
-            <p key={index} className={`text-[15px] leading-[28px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-1 sm:ml-9' : 'ml-1'} mr-0 sm:mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
+            <p key={index} className={`text-[14.5px] leading-[26px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-1 sm:ml-9' : 'ml-1'} mr-0 sm:mr-16 ${isLikelyHeaderTitle ? 'mt-[-8px] mb-1.5' : 'mb-1.5'}`}>
               {parseBold(line)}
             </p>
           );
@@ -936,26 +936,25 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
 
       {/* AI Summary Section */}
       <div className="mt-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 overflow-hidden">
-        <div className="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-elleo-purple p-3 rounded-xl shadow-lg shadow-elleo-purple/20">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        <div className="p-6 sm:p-8 border-b border-elleo-purple/10 bg-gradient-to-r from-elleo-purple/5 to-white">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-elleo-purple flex-shrink-0">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-[17px] sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap">AI 면접 분석</h3>
             </div>
-            <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">AI 인터뷰 분석 리포트</h3>
-
-            </div>
+            <Button
+              variant="purple"
+              onClick={handleAnalyze}
+              isLoading={isAnalyzeLoading}
+              className="text-[13px] sm:text-[15px] font-black px-5 sm:px-8 py-2 sm:py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5 whitespace-nowrap"
+            >
+              {aiSummary ? '다시 분석하기' : 'AI 면접 분석'}
+            </Button>
           </div>
-          <Button
-            variant="purple"
-            onClick={handleAnalyze}
-            isLoading={isAnalyzeLoading}
-            className="w-full sm:w-auto text-[15px] font-black px-8 py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5"
-          >
-            {aiSummary ? '분석 다시 실행' : 'AI 분석 리포트 생성'}
-          </Button>
         </div>
 
         <div className="p-4 sm:p-[100px] sm:pl-[100px] sm:pr-[100px] sm:pt-[70px] sm:pb-[70px]">
