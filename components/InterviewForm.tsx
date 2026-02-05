@@ -956,7 +956,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
             </div>
             <div>
               <h3 className="text-xl font-black text-slate-900 tracking-tight">AI 인터뷰 분석 리포트</h3>
-              <p className="text-sm text-slate-500 font-medium">인공지능이 최적의 역량 매칭 포인트를 분석했습니다.</p>
+
             </div>
           </div>
           <Button
