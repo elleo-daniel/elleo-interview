@@ -80,27 +80,17 @@ const formatAISummary = (text: string) => {
     mergedLines.push(current);
   }
 
-  // 1. Find the Intro Sentence index (e.g., 'NAME'님의 인터뷰 분석 결과)
-  // Look for the first line that contains the core phrase, ignoring potential markdown or quotes
-  const introIndex = mergedLines.findIndex(l => {
-    const clean = l.replace(/[\*\#\'\"]/g, '').trim();
-    return clean.includes('인터뷰 분석 결과') && clean.length < 100;
-  });
-
   return (
     <div className="space-y-1 text-slate-700 leading-relaxed">
       {mergedLines.map((line, index) => {
         if (!line) return <div key={index} className="h-0" />;
 
-        // 1. Handle Intro Sentence
-        if (index === introIndex && introIndex >= 0 && introIndex < 10) {
-          let displayTitle = line.replace(/[\*\#]/g, '').trim();
+        const cleanLine = line.replace(/\*\*/g, '').trim();
 
-          // UI handles quotes if needed, but removing for now as requested for stability
-          if (displayTitle.includes("'") || displayTitle.includes('"')) {
-            displayTitle = displayTitle.replace(/['"]/g, "");
-          }
-
+        // 1. Handle Intro Sentence (e.g., 홍길동님의 인터뷰 분석 결과)
+        const isIntropattern = cleanLine.includes('인터뷰 분석 결과') && cleanLine.length < 100;
+        if (isIntropattern && index < 5) {
+          const displayTitle = line.replace(/[\*\#]/g, '').trim();
           return (
             <div key={index} className="mb-14 text-center relative py-10 px-6 bg-gradient-to-br from-indigo-50/50 via-white to-elleo-purple/5 rounded-2xl border border-indigo-100/50 shadow-[0_20px_50px_-15px_rgba(79,70,229,0.15)] overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-transparent via-elleo-purple to-transparent opacity-90"></div>
@@ -118,7 +108,7 @@ const formatAISummary = (text: string) => {
           );
         }
 
-        const cleanLine = line.replace(/\*\*/g, '').trim();
+
 
         // 2. Handle Final Recommendation
         const cleanRecLine = line.replace(/^[\*\-\s\d\.]+/, '').trim();
