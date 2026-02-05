@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 // Use Edge runtime for streaming support and longer timeout
 export const config = {
-    runtime: 'edge',
+    runtime: 'edge', // Using edge for streaming
 };
 
 
