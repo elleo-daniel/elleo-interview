@@ -191,8 +191,8 @@ const formatAISummary = (text: string) => {
 
           return (
             <React.Fragment key={index}>
-              <h3 className="text-[17px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-3.5 group">
-                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-xl flex-shrink-0 font-montserrat font-black text-[13px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
+              <h3 className="text-[17px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-2.5 group">
+                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-[8px] flex-shrink-0 font-montserrat font-black text-[13px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
                   {num}
                 </span>
                 <span className="border-b border-transparent group-hover:border-elleo-purple/10 transition-all">
@@ -227,7 +227,7 @@ const formatAISummary = (text: string) => {
           const isLikelyHeaderTitle = !line.includes('.') && line.includes('**') && line.length < 40;
 
           return (
-            <p key={index} className={`text-[15px] leading-[28px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-1 sm:ml-11' : 'ml-1'} mr-0 sm:mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
+            <p key={index} className={`text-[15px] leading-[28px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-1 sm:ml-9' : 'ml-1'} mr-0 sm:mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
               {parseBold(line)}
             </p>
           );
