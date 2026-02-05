@@ -950,7 +950,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
               variant="purple"
               onClick={handleAnalyze}
               isLoading={isAnalyzeLoading}
-              className="text-[13px] sm:text-[15px] font-black px-5 sm:px-8 py-2 sm:py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5 whitespace-nowrap"
+              className="text-[13px] sm:text-[15px] font-black px-5 sm:px-8 py-3 sm:py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5 whitespace-nowrap"
             >
               {aiSummary ? '다시 분석하기' : 'AI 면접 분석'}
             </Button>
