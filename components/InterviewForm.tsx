@@ -94,7 +94,14 @@ const formatAISummary = (text: string) => {
 
         // 1. Handle Intro Sentence
         if (index === introIndex && introIndex >= 0 && introIndex < 10) {
-          const displayTitle = line.replace(/[\*\#]/g, '').trim();
+          let displayTitle = line.replace(/[\*\#]/g, '').trim();
+
+          // Better Idea: UI automatically handles quotes around the name
+          // If the title is "홍길동님의...", make it "'홍길동'님의..."
+          if (!displayTitle.includes("'") && !displayTitle.includes('"')) {
+            displayTitle = displayTitle.replace(/^(.*)님의/, "'$1'님의");
+          }
+
           return (
             <div key={index} className="mb-14 text-center relative py-10 px-6 bg-gradient-to-br from-indigo-50/50 via-white to-elleo-purple/5 rounded-2xl border border-indigo-100/50 shadow-[0_20px_50px_-15px_rgba(79,70,229,0.15)] overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-transparent via-elleo-purple to-transparent opacity-90"></div>
