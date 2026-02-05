@@ -954,7 +954,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
             isLoading={isAnalyzeLoading}
             className="w-full sm:w-auto text-[15px] font-black px-8 py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5"
           >
-            {aiSummary ? '분석 다시 실행' : 'AI 분석 레포트 생성'}
+            {aiSummary ? '분석 다시 실행' : 'AI 분석 리포트 생성'}
           </Button>
         </div>
 

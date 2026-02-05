@@ -1,5 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
+// Use Edge runtime for streaming support and longer timeout
+export const config = {
+    runtime: 'edge',
+};
+
 
 
 export default async function handler(req: Request) {
