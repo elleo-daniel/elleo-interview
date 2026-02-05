@@ -195,11 +195,11 @@ const formatAISummary = (text: string) => {
 
           return (
             <React.Fragment key={index}>
-              <h3 className="text-[19px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-3.5 group">
-                <span className="w-8 h-8 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-xl flex-shrink-0 font-montserrat font-black text-[15px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
+              <h3 className="text-[17px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-3.5 group">
+                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-xl flex-shrink-0 font-montserrat font-black text-[13px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
                   {num}
                 </span>
-                <span className="border-b-2 border-transparent group-hover:border-elleo-purple/10 transition-all">
+                <span className="border-b border-transparent group-hover:border-elleo-purple/10 transition-all">
                   {parseBold(title)}
                 </span>
               </h3>
