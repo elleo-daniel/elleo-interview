@@ -231,7 +231,7 @@ const formatAISummary = (text: string) => {
           const isLikelyHeaderTitle = !line.includes('.') && line.includes('**') && line.length < 40;
 
           return (
-            <p key={index} className={`text-[16px] leading-[30px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-11' : 'ml-1'} mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
+            <p key={index} className={`text-[16px] leading-[30px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-11' : 'ml-1'} mr-0 sm:mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
               {parseBold(line)}
             </p>
           );
