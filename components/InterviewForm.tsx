@@ -8,12 +8,24 @@ import { Input } from './Input';
 import { saveRecord } from '../services/db';
 import { analyzeInterview } from '../services/geminiService';
 
-// Helper to parse bold text (**text**)
+// Helper to parse bold text (**text**) - robust for streaming
 const parseBold = (text: string) => {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+  if (!text) return null;
+  if (!text.includes('**')) return text;
+
+  // Handle open bold tags during streaming to prevent showing "**" to user
+  let processedText = text;
+  const boldMatches = text.match(/\*\*/g);
+  if (boldMatches && boldMatches.length % 2 !== 0) {
+    processedText += '**';
+  }
+
+  const parts = processedText.split(/(\*\*.*?\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
+      const content = part.slice(2, -2);
+      if (!content) return null;
+      return <strong key={i} className="font-bold text-slate-900">{content}</strong>;
     }
     return part;
   });
@@ -23,67 +35,180 @@ const parseBold = (text: string) => {
 const formatAISummary = (text: string) => {
   if (!text) return null;
 
-  // Pre-process: Collapse multiple spaces and trim each line
-  const lines = text.split('\n').map(l => l.trim());
+  // 1. Initial cleanup: split by lines and trim
+  const rawLines = text.split('\n').map(l => l.trim());
+
+  // 2. Pre-process: Sticky Merger for split headers
+  // This logic is now much more aggressive to prevent splitting during streaming
+  const mergedLines: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    const current = rawLines[i];
+    if (!current) {
+      if (i < rawLines.length - 1) mergedLines.push("");
+      continue;
+    }
+
+    // STRICT MERGER: Only merge if the line is PURELY a number (ignoring markdown/spaces)
+    // Good: "1", "**1**", "1.", "### 1"
+    // Bad: "1. Strength", "1. 핵심 강점"
+    // Better: Remove standard markdown chars, then check regex.
+    const cleanForCheck = current.replace(/[\*\#_\s]/g, ''); // "**1.**" -> "1."
+    const isLoneNumber = /^(\d+)[\.\)]?$/.test(cleanForCheck);
+
+    if (isLoneNumber && i < rawLines.length - 1) {
+      let nextIdx = i + 1;
+      while (nextIdx < rawLines.length && !rawLines[nextIdx]) nextIdx++;
+
+      const nextLine = rawLines[nextIdx];
+
+      if (nextLine) {
+        // Check if next line is a Title (not another number)
+        const nextClean = nextLine.replace(/[\*\#_\s]/g, '');
+        const isNextNumber = /^(\d+)[\.\)]?$/.test(nextClean);
+
+        if (!isNextNumber) {
+          // Merge!
+          // Clean the number part to be just "1."
+          const numPart = cleanForCheck.match(/^(\d+)/)?.[1] || '';
+          mergedLines.push(`${numPart}. ${nextLine}`);
+          i = nextIdx;
+          continue;
+        }
+      }
+    }
+
+    mergedLines.push(current);
+  }
+
+  // 1. Find the Intro Sentence index (e.g., 'NAME'님의 인터뷰 분석 결과)
+  // Look for the first line that contains the core phrase, ignoring potential markdown or quotes
+  const introIndex = mergedLines.findIndex(l => {
+    const clean = l.replace(/[\*\#\'\"]/g, '').trim();
+    return clean.includes('인터뷰 분석 결과') && clean.length < 100;
+  });
 
   return (
-    <div className="space-y-3 text-slate-700 leading-relaxed">
-      {lines.map((line, index) => {
-        if (!line && index < lines.length - 1) return <div key={index} className="h-1" />;
+    <div className="space-y-1 text-slate-700 leading-relaxed">
+      {mergedLines.map((line, index) => {
+        if (!line) return <div key={index} className="h-0" />;
 
-        // Remove markdown bolding for detection purposes
-        const cleanLine = line.replace(/\*\*/g, '');
-
-        // 1. Handle Intro Sentence (Premium Card)
-        // Detects "'Name'님의 인터뷰 분석 결과" or similar short title lines
-        const isIntropattern = cleanLine.includes('인터뷰 분석 결과') && cleanLine.length < 50;
-        if (isIntropattern && index < 5) {
+        // 1. Handle Intro Sentence
+        if (index === introIndex && introIndex >= 0 && introIndex < 10) {
+          const displayTitle = line.replace(/[\*\#]/g, '').trim();
           return (
-            <div key={index} className="mb-10 text-center relative py-8 px-6 bg-gradient-to-br from-indigo-50/50 via-white to-elleo-purple/5 rounded-2xl border border-indigo-100/50 shadow-[0_15px_40px_-10px_rgba(79,70,229,0.12)] overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-[5px] bg-gradient-to-r from-transparent via-elleo-purple to-transparent opacity-80"></div>
-              <div className="relative z-10 space-y-4">
+            <div key={index} className="mb-14 text-center relative py-10 px-6 bg-gradient-to-br from-indigo-50/50 via-white to-elleo-purple/5 rounded-2xl border border-indigo-100/50 shadow-[0_20px_50px_-15px_rgba(79,70,229,0.15)] overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-transparent via-elleo-purple to-transparent opacity-90"></div>
+              <div className="relative z-10 space-y-5">
                 <div className="flex items-center justify-center gap-3">
-                  <span className="h-[1px] w-6 bg-elleo-purple/20 rounded-full"></span>
-                  <span className="text-[10px] font-black text-elleo-purple tracking-[0.3em] uppercase opacity-70">Insight Report</span>
-                  <span className="h-[1px] w-6 bg-elleo-purple/20 rounded-full"></span>
+                  <span className="h-[1px] w-8 bg-elleo-purple/30 rounded-full"></span>
+                  <span className="text-[11px] font-black text-elleo-purple tracking-[0.4em] opacity-80">INSIGHT REPORT</span>
+                  <span className="h-[1px] w-8 bg-elleo-purple/30 rounded-full"></span>
                 </div>
-                <h2 className="text-[20px] sm:text-[24px] font-black text-slate-900 leading-tight tracking-tight max-w-2xl mx-auto">
-                  {parseBold(line.replace(/\*\*인터뷰 분석 결과\*\*/, '인터뷰 분석 결과'))}
+                <h2 className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight tracking-tight max-w-2xl mx-auto">
+                  {displayTitle}
                 </h2>
               </div>
             </div>
           );
         }
 
-        // 2. Handle Verdict Header (Flexible Match)
-        if (cleanLine.includes('종합 의견') && !cleanLine.includes('최종 추천 여부') && (line.startsWith('5.') || /^[5\s]*종합 의견/.test(cleanLine) || (index > 15))) {
+        const cleanLine = line.replace(/\*\*/g, '').trim();
+
+        // 2. Handle Final Recommendation
+        const cleanRecLine = line.replace(/^[\*\-\s\d\.]+/, '').trim();
+        if (cleanRecLine.includes('최종 추천 여부') && line.length < 200) {
+          const statusPart = cleanRecLine.split('최종 추천 여부')[1]?.replace(/^[:\s\*\-]+/, '') || '';
+          const statusText = statusPart.replace(/\*/g, '').replace(/[\[\]]/g, '').trim();
+          const isRecommended = statusText.includes('추천') && !statusText.includes('비추천');
+          const isNotRecommended = statusText.includes('비추천');
+
           return (
-            <div key={index} className="mt-14 mb-6 relative">
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-elleo-purple uppercase tracking-widest leading-none mb-1">Final Verdict</span>
-                  <h3 className="text-xl font-black text-elleo-dark tracking-tighter uppercase">종합 의견</h3>
-                </div>
-                <div className="flex-1 h-[2px] bg-gradient-to-r from-elleo-purple/30 via-elleo-purple/10 to-transparent rounded-full ml-2"></div>
-              </div>
+            <div key={index} className="!mt-12 !mb-8 py-4 px-8 bg-white border-2 border-slate-100 rounded-3xl flex items-center justify-center gap-8 shadow-sm w-fit mx-auto min-w-[320px]">
+              <span className="text-[17px] font-bold text-slate-500 tracking-tight">최종 추천 여부</span>
+              <div className="h-6 w-[1px] bg-slate-200"></div>
+              <span className={`px-8 py-2.5 rounded-full text-[17px] font-black shadow-sm tracking-tight ${isRecommended
+                ? 'bg-green-100 text-green-700 border border-green-200'
+                : isNotRecommended
+                  ? 'bg-red-100 text-red-700 border border-red-200'
+                  : 'bg-orange-100 text-orange-700 border border-orange-200'
+                }`}>
+                {statusText || '판단 불가'}
+              </span>
             </div>
           );
         }
 
-        // 3. Handle Main Headers (1., 2., 3., 4.)
-        // Matches "1. **Title**:" or "1. Title" etc.
-        const headerMatch = line.match(/^(\d)\.\s*(?:\*\*)?(.*?)(?:\*\*)?[:]*$/);
-        if (headerMatch && parseInt(headerMatch[1]) <= 4) {
-          const num = headerMatch[1];
-          // Strip trailing asterisks and colons from the content part
-          const content = headerMatch[2].replace(/[:\*]+$/, '').trim();
+        // 3. Handle Section 5 (Comprehensive Opinion) Specially - Restore Simple Design
+        if (line.includes('종합 의견') && line.length < 50) {
+          const content = line.replace(/^\d+[\.\)]\s*/, '').replace(/\*\*/g, '').replace(/:$/, '').trim();
           return (
-            <h3 key={index} className="text-[18px] font-bold text-elleo-dark mt-10 mb-4 flex items-center gap-3 group">
-              <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-lg flex-shrink-0 font-montserrat font-black text-sm group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-200">
-                {num}
-              </span>
-              {parseBold(content)}
-            </h3>
+            <div key={index} className="!mt-[35px] !mb-[10px]">
+              <h3 className="text-[20px] font-black text-slate-900 tracking-tight border-l-[5px] border-elleo-purple pl-4 py-1 ml-1">
+                {content.replace(/종합\s*의견/, '종합 의견')}
+              </h3>
+            </div>
+          );
+        }
+
+        // 4. Handle Main Headers (1., 2., 3., 4.)
+        // Robust match: Handles spaces, stars, and trailing colons flexibly
+        // 4. Handle Main Headers (1., 2., 3., 4.)
+        // Robust match: Handles two cases:
+        // 1. "1. **Title**:" -> Title captured in group 2, Content in group 3
+        // 2. "1. **Title**" (no colon) -> Title captured in group 5
+        const headerRegex = /^(\d+)[\.\)]\s*(?:\*\*)?([^\:]+?)(?:\*\*)?[:]+\s*(.*)$|^(\d+)[\.\)]\s*(?:\*\*)?(.+)(?:\*\*)?$/;
+        const sectionHeaderMatch = line.match(headerRegex);
+
+        // Fallback check for legacy/incomplete lines
+        let isFallback = false;
+        let fallbackNum = '';
+        let fallbackTitle = '';
+        if (!sectionHeaderMatch) {
+          const titles = ['핵심 강점', '우려 사항', '조직 적합성', '온보딩']; // Removed '종합 의견'
+          const found = titles.find(t => cleanLine.includes(t));
+          if (found && line.length < 60) {
+            isFallback = true;
+            fallbackNum = line.match(/\d+/)?.[0] || '•';
+            fallbackTitle = line.replace(/^\d+[\.\)]\s*/, '').replace(/[:\*]+$/, '').trim();
+          }
+        }
+
+        if (sectionHeaderMatch || isFallback) {
+          // Extraction based on which group matched
+          let num = fallbackNum;
+          let title = fallbackTitle;
+          let content = '';
+
+          if (sectionHeaderMatch) {
+            if (sectionHeaderMatch[1]) {
+              // Case 1: Had colon
+              num = sectionHeaderMatch[1];
+              title = sectionHeaderMatch[2].replace(/[:\*]+$/, '').trim();
+              content = sectionHeaderMatch[3]?.trim();
+            } else {
+              // Case 2: No colon
+              num = sectionHeaderMatch[4];
+              title = sectionHeaderMatch[5].replace(/[:\*]+$/, '').trim();
+              content = ''; // No content on same line
+            }
+          }
+
+          return (
+            <React.Fragment key={index}>
+              <h3 className="text-[19px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-3.5 group">
+                <span className="w-8 h-8 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-xl flex-shrink-0 font-montserrat font-black text-[15px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
+                  {num}
+                </span>
+                <span className="border-b-2 border-transparent group-hover:border-elleo-purple/10 transition-all">
+                  {parseBold(title)}
+                </span>
+              </h3>
+              {content && (
+                <p className="text-[16px] font-normal leading-normal text-slate-600 tracking-tight mb-3 ml-11">
+                  {parseBold(content)}
+                </p>
+              )}
+            </React.Fragment>
           );
         }
 
@@ -91,45 +216,23 @@ const formatAISummary = (text: string) => {
         if (line.startsWith('* ') || line.startsWith('- ')) {
           const content = line.replace(/^([\*\-])\s*/, '');
           return (
-            <div key={index} className="flex items-start gap-2 ml-1 py-0">
-              <span className="text-elleo-purple mt-1 text-[10px]">•</span>
-              <p className="flex-1 text-[15.5px] font-medium text-slate-600 tracking-tight leading-relaxed">
+            <div key={index} className="flex items-start gap-4 ml-6 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-elleo-purple/40 mt-[10px] flex-shrink-0"></span>
+              <p className="flex-1 text-[16px] font-normal text-slate-600 tracking-tight leading-normal">
                 {parseBold(content)}
               </p>
             </div>
           );
         }
 
-        // 5. Handle Final Recommendation
-        if (line.includes('최종 추천 여부:')) {
-          const statusPart = line.split(':')[1]?.trim() || '';
-          const statusText = statusPart.replace(/\*/g, '').replace(/[\[\]]/g, '').trim();
-          const isRecommended = statusText.includes('추천') && !statusText.includes('비추천');
-          const isNotRecommended = statusText.includes('비추천');
-
-          return (
-            <div key={index} className="mt-12 p-5 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-center gap-5 shadow-sm w-fit mx-auto min-w-[280px]">
-              <span className="text-[15px] font-bold text-slate-500 tracking-tight">최종 추천 여부</span>
-              <div className="h-4 w-[1px] bg-slate-200"></div>
-              <span className={`px-5 py-1.5 rounded-full text-[15px] font-black shadow-sm ${isRecommended
-                ? 'bg-green-100 text-green-700 border border-green-200'
-                : isNotRecommended
-                  ? 'bg-red-100 text-red-700 border border-red-200'
-                  : 'bg-orange-100 text-orange-700 border border-orange-200'
-                }`}>
-                {statusText}
-              </span>
-            </div>
-          );
-        }
-
-        // 6. Regular Paragraphs
+        // 5. Regular Paragraphs
         if (line) {
-          // Collapse multiple spaces that might cause layout issues
-          const cleanedText = line.replace(/\s{2,}/g, ' ');
+          const isIndented = index > 0 && mergedLines[index - 1].match(/^\d\./);
+          const isLikelyHeaderTitle = !line.includes('.') && line.includes('**') && line.length < 40;
+
           return (
-            <p key={index} className="text-[15.5px] leading-relaxed text-slate-600 mb-0.5">
-              {parseBold(cleanedText)}
+            <p key={index} className={`text-[16px] leading-[30px] text-slate-600 font-normal tracking-tight ${isIndented || isLikelyHeaderTitle ? 'ml-11' : 'ml-1'} mr-16 ${isLikelyHeaderTitle ? 'mt-[-10px] mb-2' : 'mb-2'}`}>
+              {parseBold(line)}
             </p>
           );
         }
@@ -338,6 +441,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
     }
 
     setIsAnalyzeLoading(true);
+    setAiSummary(''); // Clear existing summary while loading
 
     // Create a temporary record for analysis
     const tempRecord: InterviewRecord = {
@@ -347,27 +451,31 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
       createdAt: Date.now()
     };
 
-    const summary = await analyzeInterview(tempRecord, stages);
-    setAiSummary(summary);
-
-    // Auto-save the record with the final summary
-    const updatedRecord: InterviewRecord = {
-      ...tempRecord,
-      aiSummary: summary,
-      id: recordId, // Ensure we use the persistent ID
-      basicInfo: {
-        ...tempRecord.basicInfo,
-        interviewType: (interviewType as 'STANDARD' | 'DEPTH') || 'STANDARD'
-      }
-    };
-
     try {
-      await saveRecord(updatedRecord);
-    } catch (e) {
-      console.error("Failed to auto-save AI summary", e);
-    }
+      // Switch from streaming to static generation for visual stability
+      const summary = await analyzeInterview(tempRecord, stages);
+      setAiSummary(summary);
 
-    setIsAnalyzeLoading(false);
+      // Auto-save the record with the final summary
+      const updatedRecord: InterviewRecord = {
+        id: recordId,
+        basicInfo: {
+          ...basicInfo,
+          interviewType: (interviewType as 'STANDARD' | 'DEPTH' | 'HR') || 'STANDARD'
+        },
+        answers,
+        resume,
+        aiSummary: summary,
+        createdAt: initialData?.createdAt || tempRecord.createdAt
+      };
+
+      await saveRecord(updatedRecord);
+    } catch (e: any) {
+      console.error("AI Analysis Error:", e);
+      await showAlert(`인터뷰 분석 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`);
+    } finally {
+      setIsAnalyzeLoading(false);
+    }
   };
 
   return (
@@ -831,30 +939,68 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
       </div>
 
       {/* AI Summary Section */}
-      <div className="mt-8 bg-white rounded-xl shadow-sm border border-elleo-purple/30 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-elleo-purple-light p-2 rounded-lg">
-              <svg className="w-6 h-6 text-elleo-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      <div className="mt-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 overflow-hidden">
+        <div className="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-elleo-purple p-3 rounded-xl shadow-lg shadow-elleo-purple/20">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-elleo-dark">AI 면접 분석</h3>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">AI 인터뷰 분석 리포트</h3>
+              <p className="text-sm text-slate-500 font-medium">인공지능이 최적의 역량 매칭 포인트를 분석했습니다.</p>
+            </div>
           </div>
-          <Button variant="purple" onClick={handleAnalyze} isLoading={isAnalyzeLoading} className="text-[14px] sm:text-base px-5 shadow-md">
-            {aiSummary ? '다시 분석하기' : 'AI 분석 생성'}
+          <Button
+            variant="purple"
+            onClick={handleAnalyze}
+            isLoading={isAnalyzeLoading}
+            className="w-full sm:w-auto text-[15px] font-black px-8 py-3 rounded-full shadow-lg shadow-elleo-purple/20 transition-all hover:-translate-y-0.5"
+          >
+            {aiSummary ? '분석 다시 실행' : 'AI 분석 레포트 생성'}
           </Button>
         </div>
 
-        {aiSummary ? (
-          <div className="bg-slate-50 rounded-lg px-4 sm:px-8 py-8 text-[15px] text-slate-700 border border-slate-200">
-            {formatAISummary(aiSummary)}
-          </div>
-        ) : (
-          <div className="text-center py-32 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-lg">
-            모든 질문에 답한 후 AI 분석을 실행하여 요약을 확인하세요.
-          </div>
-        )}
+        <div className="p-4 sm:p-[100px] sm:pl-[100px] sm:pr-[100px] sm:pt-[70px] sm:pb-[70px]">
+          {isAnalyzeLoading ? (
+            <div className="py-20 flex flex-col items-center text-center animate-fadeIn">
+              <h4 className="text-xl font-black text-slate-900 mt-8 mb-2 flex items-center justify-center gap-3">
+                <img
+                  src="https://www.sushia.com.au/wp-content/uploads/2026/01/Elleo-Group-Symbel.svg"
+                  alt="Elleo Group Logo"
+                  className="w-8 h-8 animate-pulse"
+                />
+                <span>
+                  면접 데이터를 분석중입니다
+                  <span className="inline-flex w-8 justify-start">
+                    <span className="animate-[loading_1.5s_infinite_0ms]">.</span>
+                    <span className="animate-[loading_1.5s_infinite_200ms]">.</span>
+                    <span className="animate-[loading_1.5s_infinite_400ms]">.</span>
+                  </span>
+                </span>
+              </h4>
+              <style>{`
+                @keyframes loading {
+                  0%, 100% { opacity: 0.2; }
+                  50% { opacity: 1; }
+                }
+              `}</style>
+            </div>
+          ) : aiSummary ? (
+            <div className="animate-fadeIn">
+              {formatAISummary(aiSummary)}
+            </div>
+          ) : (
+            <div className="py-24 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 text-slate-300">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <p className="text-slate-600 font-black text-lg mb-2">작성된 분석 결과가 없습니다</p>
+              <p className="text-slate-400 font-medium text-sm">인터뷰 작성을 완료하고 AI 분석 버튼을 눌러주세요.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Global Bottom Actions (Backup) */}

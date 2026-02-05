@@ -28,6 +28,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+
+      // If we have no session but there's an OAuth hash, keep loading true
+      // onAuthStateChange will handle the session update momentarily
+      if (!session && window.location.hash && window.location.hash.includes('access_token')) {
+        return;
+      }
+
       if (!session) setLoading(false);
     }).catch((err) => {
       console.error("Auth session check failed", err);
@@ -41,6 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (!session) {
+        // Prevent flashing login screen if we're in the middle of a hash redirect
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          return;
+        }
         setRole(null);
         setLoading(false);
       }
@@ -93,12 +104,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
           setLoading(false);
         }
-      } else {
-        setLoading(false);
       }
     };
 
     checkAccessAndRole();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      // Clean up URL hash after successful OAuth redirect
+      if (window.location.hash) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      // Also handle the edge case where the URL ends with a trailing # but empty hash property
+      else if (window.location.href.endsWith('#')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
   }, [user]);
 
   const signOut = async () => {

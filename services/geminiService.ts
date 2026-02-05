@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
 import { InterviewRecord, Stage, Question } from '../types';
+import { GoogleGenAI } from "@google/genai";
 
 // Helper to flatten questions for context
 const getAllQuestions = (stages: Stage[]): Question[] => {
@@ -12,13 +12,9 @@ const getAllQuestions = (stages: Stage[]): Question[] => {
   return questions;
 };
 
-export const analyzeInterview = async (record: InterviewRecord, stages: Stage[]): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) {
-    return "API Key is missing. Please configure your environment.";
-  }
-
-  const ai = new GoogleGenAI({ apiKey: apiKey });
+export const analyzeInterview = async (record: InterviewRecord, stages: Stage[], onStreamingUpdate?: (text: string) => void): Promise<string> => {
+  // API Key check is now handled on the server side
+  // const ai = new GoogleGenAI({ apiKey: apiKey });
   const allQuestions = getAllQuestions(stages);
 
   // Construct a prompt context
@@ -44,12 +40,13 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[])
   }
 
   const prompt = `
-    You are an expert HR Interviewer for the Elleo Group. 
+    You are an expert HR Interviewer for 'Sushia' (Elleo Group). 
     
     [Core Persona & Hiring Stance]
-    - You are a helpful HR expert for Elleo Group.
-    - Your stance is **Generous and Practical**. Focus on "Trainability" and "Growth Potential".
-    - Your goal is to provide actionable tips for managers to train new hires.
+    - You are a helpful HR expert for Sushia.
+    - Your stance is **Generous and Positive**. Focus on "Trainability" and "Growth Potential".
+    - Even if there are minor weaknesses, look for reasons to recommend if the candidate shows a good attitude and basic skills.
+    - Only give a "비추천" (Not Recommended) if the results are clearly poor or there's a serious lack of sincerity.
     - **Weekend Work Policy**: Weekend (Sat/Sun) work is **NOT** mandatory. Do not mark unavailability on weekends as a negative point or a "Concern Area". Focus on their overall availability and willingness to work.
     
     [CRITICAL INSTRUCTION - HANDLING INSINCERE/LOW-QUALITY ANSWERS]
@@ -63,31 +60,82 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[])
     [Important Formatting Rules - MUST FOLLOW]
     1. Provide the structured summary in Korean (Markdown format).
     2. Start the analysis report with this EXACT sentence: **'${record.basicInfo.name}'님의 인터뷰 분석 결과**
-    3. **HARD PROHIBITION (NEVER WRITE THESE):**
+    3. **SECTION FORMATTING (CRITICAL):**
+       - **Sections 1, 2, 3, and 5** (핵심 강점, 우려 사항, 조직 적합성, 종합 의견) MUST be written as a **single natural paragraph (prose)**. Do NOT use bullet points or numbered lists in these sections.
+       - **Section 4** (온보딩 & 코칭 가이드) MUST use **standard bullet points (- )** for actionable tips.
+    4. **HARD PROHIBITION (NEVER WRITE THESE):**
        - NEVER use brand slogans like "더 건강한 선택", "탁월한 품질", "더 나은 내일" in the text.
        - NEVER mention ANY internal store situations like "인력 부족" (labor shortage), "인력난", "노동력 부족", or "현재 매장 상황".
        - NEVER mention YOUR own logic like "최대한 긍정적으로 검토하고자 했다" (tried to be positive).
        - NEVER use the phrase "최상의 환대 서비스". Instead, focus on the candidate's **"최고의 서비스를 제공하고자 하는 노력과 의지"**.
-    4. The output must be 100% natural, professional Korean. (No English except "Elleo Group" and "AI").
-    5. No extra preamble or conclusion text.
+    5. The output must be 100% natural, professional Korean. (No English except "Elleo Group", "Sushia", and "AI").
+    6. No extra preamble or conclusion text.
 
-    [Output Structure - MUST USE THIS EXACT NUMBERING]
-    1. **핵심 강점**: Focus on potential and attitude. (If insincere, state "답변 불성실로 파악 불가")
-    2. **우려 사항**: Be objective but focus on trainable points. Mark insincere answers (e.g., "ㅋㅋㅋ") as red flags.
-    3. **조직 적합성**: Assess alignment with team culture.
-    4. **온보딩 & 코칭 가이드**: Provide 2-3 specific, actionable tips. Use bullet points (- ).
-    5. **종합 의견**: Final perspective.
-       - 마지막 줄은 반드시 "최종 추천 여부: [추천/보류/비추천]" 형식을 지키세요.
+    [Strict Formatting Rules - MUST FOLLOW REGIDLY]
+    1. Each section header MUST be on a SINGLE LINE: "N. **Title**:" (e.g., "1. **핵심 강점**:")
+    2. NEVER put the number and the title on separate lines.
+    3. Put the actual content on the NEXT LINE after the header.
+    4. The VERY LAST line MUST be: "최종 추천 여부: [추천/보류/비추천]"
+    5. NO extra decorations, preamble, or symbols.
+
+    [Output Template - COPY THIS EXACTLY]
+    1. **핵심 강점**:
+    (Single Paragraph Content)
+
+    2. **우려 사항**:
+    (Single Paragraph Content)
+
+    3. **조직 적합성**:
+    (Single Paragraph Content)
+
+    4. **온보딩 & 코칭 가이드**:
+    - (Tip 1)
+    - (Tip 2)
+
+    5. **종합 의견**:
+    (Single Paragraph Content)
+
+    최종 추천 여부: [추천/보류/비추천]
 
     ${context}
   `;
 
+
+
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
     });
-    return response.text || "Could not generate summary.";
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown server error' }));
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+      if (onStreamingUpdate) {
+        onStreamingUpdate(fullText);
+      }
+    }
+
+    return fullText || "Could not generate summary.";
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "An error occurred while communicating with the AI assistant.";

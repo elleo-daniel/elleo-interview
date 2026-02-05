@@ -43,15 +43,31 @@ export const saveRecord = async (record: InterviewRecord): Promise<void> => {
 
   const finalUserId = existingRecord?.user_id || user.id;
 
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .upsert({ ...dbRecord, user_id: finalUserId }, { onConflict: 'id' });
+  let error;
+
+  if (existingRecord) {
+    // UPDATE existing record
+    // This strictly checks UPDATE policies (which now allow Admins)
+    const { error: updateError } = await supabase
+      .from(TABLE_NAME)
+      .update({ ...dbRecord, user_id: finalUserId })
+      .eq('id', record.id);
+    error = updateError;
+  } else {
+    // INSERT new record
+    // This checks INSERT policies (standard: auth.uid() = user_id)
+    // Since Admin is creating the record, user_id matches, so it passes.
+    const { error: insertError } = await supabase
+      .from(TABLE_NAME)
+      .insert({ ...dbRecord, user_id: finalUserId });
+    error = insertError;
+  }
 
   if (error) {
-    console.error('❌ Supabase Upsert Error:', error);
+    console.error('❌ Supabase Save Error:', error);
     throw error;
   }
-  console.log('✅ Supabase Upsert Success:', data);
+  console.log('✅ Supabase Save Success');
 };
 
 export const getRecords = async (): Promise<InterviewRecord[]> => {

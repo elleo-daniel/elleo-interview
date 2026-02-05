@@ -57,9 +57,15 @@ const AppContent: React.FC = () => {
   // Only show full-screen loader if we don't know who the user is yet
   if (loading && !user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium">Loading Interview Mate...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="flex flex-col items-center animate-pulse">
+          <img
+            src="https://www.sushia.com.au/wp-content/uploads/2026/01/Elleo-Group-Logo-B.svg"
+            alt="Elleo Group"
+            className="h-16 w-auto mb-8"
+          />
+          {/* Optional: Add a small spinner or text below if desired, but clean is better */}
+        </div>
       </div>
     );
   }
