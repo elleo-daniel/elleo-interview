@@ -54,14 +54,13 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[],
       1. Do NOT try to invent or infer strengths.
       2. In the "**핵심 강점**" section, EXPLICITLY state: "답변이 불성실하여 강점을 파악할 수 없음." (Strengths cannot be determined due to insincere attitude).
       3. Mark "**우려 사항**" as CRITICAL due to lack of sincerity.
-      4. In "**종합 의견**", strongly advise against hiring.
-      5. The final recommendation MUST be "**비추천**".
+      4. In "**온보딩 & 코칭 가이드**", state clearly that a guide cannot be provided due to insincere answers. **MUST be written as a single natural paragraph (prose) in this case - NO bullets.**
 
     [Important Formatting Rules - MUST FOLLOW]
     1. Provide the structured summary in Korean (Markdown format).
     2. Start the analysis report with this sentence: **${record.basicInfo.name}님의 인터뷰 분석 결과**
     3. **SECTION FORMATTING (CRITICAL):**
-       - **Sections 1, 2, 3, and 5** (핵심 강점, 우려 사항, 조직 적합성, 종합 의견) MUST be written as a **single natural paragraph (prose)**. Do NOT use bullet points or numbered lists in these sections.
+       - **Sections 1, 2, 3** (핵심 강점, 우려 사항, 조직 적합성) MUST be written as a **single natural paragraph (prose)**. Do NOT use bullet points or numbered lists in these sections.
        - **Section 4** (온보딩 & 코칭 가이드) MUST use **standard bullet points (- )** for actionable tips.
     4. **HARD PROHIBITION (NEVER WRITE THESE):**
        - NEVER use brand slogans like "더 건강한 선택", "탁월한 품질", "더 나은 내일" in the text.
@@ -75,8 +74,7 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[],
     1. Each section header MUST be on a SINGLE LINE: "N. **Title**:" (e.g., "1. **핵심 강점**:")
     2. NEVER put the number and the title on separate lines.
     3. Put the actual content on the NEXT LINE after the header.
-    4. The VERY LAST line MUST be: "최종 추천 여부: [추천/보류/비추천]"
-    5. NO extra decorations, preamble, or symbols.
+    4. NO extra decorations, preamble, or symbols.
 
     [Output Template - COPY THIS EXACTLY]
     1. **핵심 강점**:
@@ -91,11 +89,6 @@ export const analyzeInterview = async (record: InterviewRecord, stages: Stage[],
     4. **온보딩 & 코칭 가이드**:
     - (Tip 1)
     - (Tip 2)
-
-    5. **종합 의견**:
-    (Single Paragraph Content)
-
-    최종 추천 여부: [추천/보류/비추천]
 
     ${context}
   `;

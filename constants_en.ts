@@ -188,7 +188,7 @@ export const INTERVIEW_STAGES_EN: Stage[] = [
     },
 
     /* =========================
-     * Stage 5. Mandatory Notices
+        title: 'Stage 5: Notice & Evaluation',
      * ========================= */
     {
         id: 'stage5',
@@ -201,16 +201,27 @@ export const INTERVIEW_STAGES_EN: Stage[] = [
                 questions: [],
                 notices: [
                     'Elleo Group complies with legal regulations, and all wages are automatically deposited every two weeks. (No cash payments)',
-                    'Annual Leave and Superannuation are legally applied, so the actual value received is higher than the base rate.',
-                    'Please note that legal minimum wage rates vary by age.',
-                    'Store operating hours are 07:00 ~ 17:30, and schedules will be adjusted accordingly.',
-                    'For Working Holiday visa holders, weekly working hours cannot exceed 42 hours due to legal restrictions.',
-                    'Employment starts as part-time, with opportunities for full-time conversion and visa sponsorship based on performance.',
-                    'The first 4 hours are a trial to check work suitability and are unpaid.',
-                    'A minimum of 2 weeks notice is required before resignation for handover.',
-                    'A 6-month probation period applies after joining, during which both the company and employee can decide to end the contract.'
+                    'Annual Leave and Superannuation are legally applied, making the actual value higher than the base pay.',
+                    'Legal minimum wage (Rate) may vary based on age.',
+                    'Store operating hours are 07:00 ~ 17:30, and work schedules are adjusted accordingly.',
+                    'For Working Holiday visa holders, maximum weekly work hours cannot exceed 42 hours per internal policy.',
+                    'Employment starts as part-time, with opportunities for full-time transition and visa sponsorship based on performance.',
+                    'The first hour of work is a trial to check job suitability and is unpaid.',
+                    'A minimum notice of 2 weeks is required before resignation for handover.',
+                    'A 6-month probation period applies, during which both the company and the employee can terminate the contract.'
                 ],
                 requireConsent: true
+            },
+            {
+                id: 's5_evaluation',
+                title: 'Candidate Evaluation',
+                questions: [
+                    {
+                        id: 'q5_eval',
+                        text: "What was the overall attitude and impression of the candidate? (Interviewer's Evaluation)",
+                        checkpoints: ['Overall Impression', 'Attitude and Sincerity']
+                    }
+                ]
             }
         ]
     }

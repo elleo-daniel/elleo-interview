@@ -88,16 +88,18 @@ const formatAISummary = (text: string) => {
         const cleanLine = line.replace(/\*\*/g, '').trim();
 
         // 1. Handle Intro Sentence (e.g., 홍길동님의 인터뷰 분석 결과)
-        const isIntropattern = cleanLine.includes('인터뷰 분석 결과') && cleanLine.length < 100;
-        if (isIntropattern && index < 5) {
-          const displayTitle = line.replace(/[\*\#]/g, '').trim();
+        // More robust: match name variations and allow longer index if preamble exists
+        const isIntropattern = (cleanLine.includes('인터뷰 분석 결과') || cleanLine.includes('면접 분석 결과')) && cleanLine.length < 100;
+        if (isIntropattern && index < 10) {
+          // Clean everything except the core title text
+          const displayTitle = line.replace(/[\*\#\:]/g, '').trim();
           return (
             <div key={index} className="mb-14 text-center relative py-10 px-6 bg-gradient-to-br from-indigo-50/50 via-white to-elleo-purple/5 rounded-2xl border border-indigo-100/50 shadow-[0_20px_50px_-15px_rgba(79,70,229,0.15)] overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-transparent via-elleo-purple to-transparent opacity-90"></div>
               <div className="relative z-10 space-y-5">
                 <div className="flex items-center justify-center gap-3">
                   <span className="h-[1px] w-8 bg-elleo-purple/30 rounded-full"></span>
-                  <span className="text-[11px] font-black text-elleo-purple tracking-[0.4em] opacity-80">INSIGHT REPORT</span>
+                  <span className="text-[11px] font-black text-elleo-purple tracking-[0.4em] opacity-80 uppercase">INSIGHT REPORT</span>
                   <span className="h-[1px] w-8 bg-elleo-purple/30 rounded-full"></span>
                 </div>
                 <h2 className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight tracking-tight max-w-2xl mx-auto">
@@ -110,41 +112,7 @@ const formatAISummary = (text: string) => {
 
 
 
-        // 2. Handle Final Recommendation
-        const cleanRecLine = line.replace(/^[\*\-\s\d\.]+/, '').trim();
-        if (cleanRecLine.includes('최종 추천 여부') && line.length < 200) {
-          const statusPart = cleanRecLine.split('최종 추천 여부')[1]?.replace(/^[:\s\*\-]+/, '') || '';
-          const statusText = statusPart.replace(/\*/g, '').replace(/[\[\]]/g, '').trim();
-          const isRecommended = statusText.includes('추천') && !statusText.includes('비추천');
-          const isNotRecommended = statusText.includes('비추천');
 
-          return (
-            <div key={index} className="!mt-12 !mb-8 py-4 px-8 bg-white border-2 border-slate-100 rounded-3xl flex items-center justify-center gap-8 shadow-sm w-fit mx-auto min-w-[320px]">
-              <span className="text-[17px] font-bold text-slate-500 tracking-tight">최종 추천 여부</span>
-              <div className="h-6 w-[1px] bg-slate-200"></div>
-              <span className={`px-8 py-2.5 rounded-full text-[17px] font-black shadow-sm tracking-tight ${isRecommended
-                ? 'bg-green-100 text-green-700 border border-green-200'
-                : isNotRecommended
-                  ? 'bg-red-100 text-red-700 border border-red-200'
-                  : 'bg-orange-100 text-orange-700 border border-orange-200'
-                }`}>
-                {statusText || '판단 불가'}
-              </span>
-            </div>
-          );
-        }
-
-        // 3. Handle Section 5 (Comprehensive Opinion) Specially - Restore Simple Design
-        if (line.includes('종합 의견') && line.length < 50) {
-          const content = line.replace(/^\d+[\.\)]\s*/, '').replace(/\*\*/g, '').replace(/:$/, '').trim();
-          return (
-            <div key={index} className="!mt-[35px] !mb-[10px]">
-              <h3 className="text-[20px] font-black text-slate-900 tracking-tight border-l-[5px] border-elleo-purple pl-4 py-1 ml-1">
-                {content.replace(/종합\s*의견/, '종합 의견')}
-              </h3>
-            </div>
-          );
-        }
 
         // 4. Handle Main Headers (1., 2., 3., 4.)
         // Robust match: Handles spaces, stars, and trailing colons flexibly
@@ -161,10 +129,11 @@ const formatAISummary = (text: string) => {
         let fallbackTitle = '';
         if (!sectionHeaderMatch) {
           const titles = ['핵심 강점', '우려 사항', '조직 적합성', '온보딩']; // Removed '종합 의견'
-          const found = titles.find(t => cleanLine.includes(t));
+          const found = titles.find(t => cleanLine.startsWith(t)); // Use startsWith instead of includes
           if (found && line.length < 60) {
             isFallback = true;
             fallbackNum = line.match(/\d+/)?.[0] || '•';
+            // Clean the title more carefully
             fallbackTitle = line.replace(/^\d+[\.\)]\s*/, '').replace(/[:\*]+$/, '').trim();
           }
         }
@@ -191,8 +160,8 @@ const formatAISummary = (text: string) => {
 
           return (
             <React.Fragment key={index}>
-              <h3 className="text-[16px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-2.5 group">
-                <span className="w-7 h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-[8px] flex-shrink-0 font-montserrat font-black text-[12px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
+              <h3 className="text-[16px] font-black text-slate-900 !mt-[25px] !mb-[5px] flex items-center gap-2 group">
+                <span className="w-[25px] h-[25px] sm:w-7 sm:h-7 bg-white text-elleo-purple border-2 border-elleo-purple/20 flex items-center justify-center rounded-[6px] sm:rounded-[8px] flex-shrink-0 font-montserrat font-black text-[12px] group-hover:bg-elleo-purple group-hover:text-white group-hover:border-elleo-purple transition-all duration-300 shadow-sm">
                   {num}
                 </span>
                 <span className="border-b border-transparent group-hover:border-elleo-purple/10 transition-all font-bold">
@@ -200,7 +169,7 @@ const formatAISummary = (text: string) => {
                 </span>
               </h3>
               {content && (
-                <p className="text-[16px] font-normal leading-normal text-slate-600 tracking-tight mb-3 ml-11">
+                <p className="text-[14.5px] font-normal leading-normal text-slate-600 tracking-tight mb-3 ml-11">
                   {parseBold(content)}
                 </p>
               )}
@@ -214,7 +183,7 @@ const formatAISummary = (text: string) => {
           return (
             <div key={index} className="flex items-start gap-4 ml-6 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-elleo-purple/40 mt-[10px] flex-shrink-0"></span>
-              <p className="flex-1 text-[16px] font-normal text-slate-600 tracking-tight leading-normal">
+              <p className="flex-1 text-[14.5px] font-normal text-slate-600 tracking-tight leading-normal">
                 {parseBold(content)}
               </p>
             </div>
@@ -362,7 +331,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
         id: recordId, // Use the persistent ID
         basicInfo: {
           ...basicInfo,
-          interviewType: (interviewType as 'STANDARD' | 'DEPTH') || 'STANDARD'
+          interviewType: (interviewType as 'STANDARD' | 'DEPTH' | 'HR') || 'STANDARD'
         },
         answers,
         resume,
@@ -433,6 +402,16 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
   const handleAnalyze = async () => {
     if (!basicInfo.name) {
       await showAlert("분석을 위해 기본 정보를 먼저 입력해주세요.");
+      return;
+    }
+
+    const hasAnyAnswer = Object.values(answers).some(val => {
+      if (typeof val === 'string') return val.trim() !== '';
+      return !!val;
+    });
+
+    if (!hasAnyAnswer) {
+      await showAlert("분석을 위해 인터뷰 내용을 먼저 입력해주세요.");
       return;
     }
 
@@ -879,14 +858,56 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
                                     // Tab+Shift should go back, Tab or Shift+Enter should go forward
                                     const direction = (e.key === 'Tab' && e.shiftKey) ? -1 : 1;
 
-                                    if (direction === 1 && currentIndex < visibleQuestions.length - 1) {
-                                      const nextId = visibleQuestions[currentIndex + 1].id;
-                                      setExpandedQuestions(prev => new Set(prev).add(nextId));
-                                      setPendingFocusId(nextId);
-                                    } else if (direction === -1 && currentIndex > 0) {
-                                      const prevId = visibleQuestions[currentIndex - 1].id;
-                                      setExpandedQuestions(prev => new Set(prev).add(prevId));
-                                      setPendingFocusId(prevId);
+                                    if (direction === 1) {
+                                      if (currentIndex < visibleQuestions.length - 1) {
+                                        const nextId = visibleQuestions[currentIndex + 1].id;
+                                        setExpandedQuestions(prev => new Set(prev).add(nextId));
+                                        setPendingFocusId(nextId);
+                                      } else if (activeStageIndex < stages.length - 1) {
+                                        // Move to next stage if possible
+                                        const nextStage = stages[activeStageIndex + 1];
+                                        const nextVisibleQuestions = (nextStage.sections || [])
+                                          .filter(section => {
+                                            if (!section.condition) return true;
+                                            const cond = section.condition.trim();
+                                            if (cond === 'hasSushiExperience === true') return basicInfo.hasSushiExperience === true;
+                                            if (cond === 'hasSushiExperience === false') return basicInfo.hasSushiExperience === false;
+                                            return true;
+                                          })
+                                          .flatMap(s => s.questions || []);
+
+                                        if (nextVisibleQuestions.length > 0) {
+                                          setActiveStageId(nextStage.id);
+                                          const firstId = nextVisibleQuestions[0].id;
+                                          setExpandedQuestions(prev => new Set(prev).add(firstId));
+                                          setPendingFocusId(firstId);
+                                        }
+                                      }
+                                    } else if (direction === -1) {
+                                      if (currentIndex > 0) {
+                                        const prevId = visibleQuestions[currentIndex - 1].id;
+                                        setExpandedQuestions(prev => new Set(prev).add(prevId));
+                                        setPendingFocusId(prevId);
+                                      } else if (activeStageIndex > 0) {
+                                        // Move to previous stage if possible
+                                        const prevStage = stages[activeStageIndex - 1];
+                                        const prevVisibleQuestions = (prevStage.sections || [])
+                                          .filter(section => {
+                                            if (!section.condition) return true;
+                                            const cond = section.condition.trim();
+                                            if (cond === 'hasSushiExperience === true') return basicInfo.hasSushiExperience === true;
+                                            if (cond === 'hasSushiExperience === false') return basicInfo.hasSushiExperience === false;
+                                            return true;
+                                          })
+                                          .flatMap(s => s.questions || []);
+
+                                        if (prevVisibleQuestions.length > 0) {
+                                          setActiveStageId(prevStage.id);
+                                          const lastId = prevVisibleQuestions[prevVisibleQuestions.length - 1].id;
+                                          setExpandedQuestions(prev => new Set(prev).add(lastId));
+                                          setPendingFocusId(lastId);
+                                        }
+                                      }
                                     }
                                   }
                                 }}
@@ -936,10 +957,10 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
 
       {/* AI Summary Section */}
       <div className="mt-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 overflow-hidden">
-        <div className="p-6 sm:p-8 border-b border-elleo-purple/10 bg-gradient-to-r from-elleo-purple/5 to-white">
+        <div className="px-4 py-6 sm:p-8 border-b border-elleo-purple/10 bg-gradient-to-r from-elleo-purple/5 to-white">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-elleo-purple flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#ecebff] rounded-[8px] sm:rounded-[10px] flex items-center justify-center text-elleo-purple flex-shrink-0">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
@@ -960,7 +981,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
         <div className="p-4 sm:p-[100px] sm:pl-[100px] sm:pr-[100px] sm:pt-[70px] sm:pb-[70px]">
           {isAnalyzeLoading ? (
             <div className="py-20 flex flex-col items-center text-center animate-fadeIn">
-              <h4 className="text-xl font-black text-slate-900 mt-8 mb-2 flex items-center justify-center gap-3">
+              <h4 className="text-base font-bold text-[#273851] mt-8 mb-2 flex items-center justify-center gap-3">
                 <img
                   src="https://www.sushia.com.au/wp-content/uploads/2026/01/Elleo-Group-Symbel.svg"
                   alt="Elleo Group Logo"
@@ -968,7 +989,7 @@ export const InterviewForm: React.FC<InterviewFormProps> = ({ initialData, stage
                 />
                 <span>
                   면접 데이터를 분석중입니다
-                  <span className="inline-flex w-8 justify-start">
+                  <span className="inline-flex w-8 justify-start text-elleo-purple">
                     <span className="animate-[loading_1.5s_infinite_0ms]">.</span>
                     <span className="animate-[loading_1.5s_infinite_200ms]">.</span>
                     <span className="animate-[loading_1.5s_infinite_400ms]">.</span>

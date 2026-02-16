@@ -87,7 +87,7 @@ export const getRecords = async (): Promise<InterviewRecord[]> => {
 
   let query = supabase
     .from(TABLE_NAME)
-    .select('id, basic_info, answers, ai_summary, created_at');
+    .select('*');
 
   // If NOT admin, restrict to own records
   if (profile?.role !== 'admin') {

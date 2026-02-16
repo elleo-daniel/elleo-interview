@@ -32,7 +32,7 @@ export const Login: React.FC = () => {
                     <img
                         src="https://www.sushia.com.au/wp-content/uploads/2026/01/Elleo-Group-Logo-B.svg"
                         alt="Elleo Group Logo"
-                        className="h-[38px] w-auto mb-6 object-contain"
+                        className="h-[30px] sm:h-[38px] w-auto mb-6 object-contain"
                     />
                     <h2 className="text-[30px] font-extrabold text-elleo-dark font-montserrat tracking-normal uppercase">
                         Interview Mate

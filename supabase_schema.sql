@@ -46,6 +46,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interview_records' AND column_name='user_id') THEN
     ALTER TABLE public.interview_records ADD COLUMN user_id uuid REFERENCES auth.users(id);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interview_records' AND column_name='resume') THEN
+    ALTER TABLE public.interview_records ADD COLUMN resume jsonb;
+  END IF;
 END $$;
 
 -- Enable RLS
@@ -91,8 +94,3 @@ CREATE POLICY "Managers can update own records"
   FOR UPDATE
   USING ( auth.uid() = user_id )
   WITH CHECK ( auth.uid() = user_id );
-
-CREATE POLICY "Managers can delete own records"
-  ON public.interview_records
-  FOR DELETE
-  USING ( auth.uid() = user_id );

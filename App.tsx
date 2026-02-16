@@ -62,7 +62,7 @@ const AppContent: React.FC = () => {
           <img
             src="https://www.sushia.com.au/wp-content/uploads/2026/01/Elleo-Group-Logo-B.svg"
             alt="Elleo Group"
-            className="h-16 w-auto mb-8"
+            className="h-12 sm:h-16 w-auto mb-8"
           />
           {/* Optional: Add a small spinner or text below if desired, but clean is better */}
         </div>

@@ -112,24 +112,30 @@ export const INTERVIEW_STAGES_EN: Stage[] = [
     },
     {
         id: 'stage5',
-        title: '5단계: 필수 고지사항',
+        title: 'Stage 5: Notice & Evaluation',
         type: 'notice',
         sections: [
             {
                 id: 's5_notice',
                 questions: [],
                 notices: [
-                    'Elleo Group complies with legal regulations, and all wages are automatically deposited every two weeks. (No cash payments)',
-                    'Annual Leave and Superannuation are legally applied, so the actual value received is higher than the base rate.',
-                    'Please note that legal minimum wage rates vary by age.',
-                    'Store operating hours are 07:00 ~ 17:30, and schedules will be adjusted accordingly.',
-                    'For Working Holiday visa holders, weekly working hours cannot exceed 42 hours due to legal restrictions.',
-                    'Employment starts as part-time, with opportunities for full-time conversion and visa sponsorship based on performance.',
-                    'The first 4 hours are a trial to check work suitability and are unpaid.',
-                    'A minimum of 2 weeks notice is required before resignation for handover.',
-                    'A 6-month probation period applies after joining, during which both the company and employee can decide to end the contract.'
+                    'Elleo Group complies with legal regulations, and all wages are automatically deposited through bank accounts.',
+                    'Wages comply with the legal minimum rate and visa regulations, and Superannuation is contributed separately.',
+                    'The first 1 hour is an unpaid trial period to confirm job suitability.',
+                    'A 6-month probation period is applied.'
                 ],
                 requireConsent: true
+            },
+            {
+                id: 's5_evaluation',
+                title: 'Candidate Evaluation',
+                questions: [
+                    {
+                        id: 'q5_eval',
+                        text: "What was the overall attitude and impression of the candidate? (Interviewer's Evaluation)",
+                        checkpoints: ['Overall Impression', 'Attitude and Sincerity']
+                    }
+                ]
             }
         ]
     }
